@@ -35,7 +35,7 @@ jobs:
           KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
         run: |
           cat > keystore.properties <<EOF2
-          storeFile=app/release-keystore.jks
+          storeFile=release-keystore.jks
           storePassword=$STORE_PASSWORD
           keyAlias=$KEY_ALIAS
           keyPassword=$KEY_PASSWORD
