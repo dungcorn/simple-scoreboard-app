@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>간단 스코어보드</title>
+  <style>
+    :root {
+      --blue: #1565ff;
+      --red: #e53935;
+      --white: #ffffff;
+      --panel-height: calc(100dvh - 92px);
+      --menu-height: 92px;
+    }
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    html, body {
+      margin: 0;
+      height: 100%;
+      overflow: hidden;
+      font-family: Arial, Helvetica, sans-serif;
+      background: #000;
+    }
+    body { color: var(--white); user-select: none; touch-action: manipulation; }
+    .app { height: 100dvh; display: flex; flex-direction: column; }
+    .board { height: var(--panel-height); display: flex; width: 100%; }
+    .team {
+      position: relative; flex: 1; border: none; color: var(--white); display: flex;
+      align-items: center; justify-content: center; font-weight: 800;
+      font-size: clamp(4rem, 18vw, 9rem); cursor: pointer; overflow: hidden;
+    }
+    .team:active { filter: brightness(1.08); }
+    .team.blue { background: var(--blue); }
+    .team.red { background: var(--red); }
+    .label {
+      position: absolute; top: 16px; left: 18px; font-size: clamp(1rem, 2.8vw, 1.35rem);
+      font-weight: 700; opacity: 0.95; pointer-events: none;
+    }
+    .score { line-height: 1; letter-spacing: 0.02em; font-variant-numeric: tabular-nums; pointer-events: none; }
+    .undo {
+      position: absolute; right: 14px; bottom: 14px; width: 56px; height: 56px; border-radius: 999px;
+      border: 2px solid rgba(255,255,255,0.45); background: rgba(255,255,255,0.14); color: var(--white);
+      font-size: 1.35rem; font-weight: 700; display: flex; align-items: center; justify-content: center;
+      cursor: pointer; z-index: 2;
+    }
+    .undo:active { transform: scale(0.97); background: rgba(255,255,255,0.22); }
+    .menu {
+      height: var(--menu-height); display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
+      padding: 10px; background: #1a1a1a; border-top: 2px solid rgba(255,255,255,0.12);
+    }
+    .menu button {
+      border: none; border-radius: 16px; background: #2c2c2c; color: var(--white);
+      font-size: 1rem; font-weight: 700; cursor: pointer;
+    }
+    .menu button:active { transform: scale(0.99); background: #3a3a3a; }
+    @media (max-width: 640px) {
+      :root { --menu-height: 84px; --panel-height: calc(100dvh - 84px); }
+      .undo { width: 50px; height: 50px; }
+      .label { top: 12px; left: 14px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <div class="board" id="board"></div>
+    <div class="menu">
+      <button id="resetBtn" type="button">전체 초기화</button>
+      <button id="swapBtn" type="button">좌우 바꾸기</button>
+    </div>
+  </div>
+  <script>
+    const state = { blue: 0, red: 0, order: ['blue', 'red'] };
+    const board = document.getElementById('board');
+    const resetBtn = document.getElementById('resetBtn');
+    const swapBtn = document.getElementById('swapBtn');
+    const teamMeta = {
+      blue: { label: '파란팀', className: 'blue' },
+      red: { label: '빨간팀', className: 'red' }
+    };
+    function clampScore(value) { return Math.max(0, Math.min(99, value)); }
+    function formatScore(value) { return String(clampScore(value)).padStart(2, '0'); }
+    function addPoint(team) { state[team] = clampScore(state[team] + 1); render(); }
+    function undoPoint(team) { state[team] = clampScore(state[team] - 1); render(); }
+    function resetScores() { state.blue = 0; state.red = 0; render(); }
+    function swapSides() { state.order.reverse(); render(); }
+    function makeTeamPanel(team) {
+      const meta = teamMeta[team];
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = `team ${meta.className}`;
+      button.setAttribute('aria-label', `${meta.label} 점수 올리기`);
+      button.addEventListener('click', () => addPoint(team));
+      const label = document.createElement('div');
+      label.className = 'label';
+      label.textContent = meta.label;
+      const score = document.createElement('div');
+      score.className = 'score';
+      score.textContent = formatScore(state[team]);
+      const undo = document.createElement('button');
+      undo.type = 'button';
+      undo.className = 'undo';
+      undo.textContent = '↺';
+      undo.setAttribute('aria-label', `${meta.label} 점수 되돌리기`);
+      undo.addEventListener('click', (event) => { event.stopPropagation(); undoPoint(team); });
+      button.appendChild(label); button.appendChild(score); button.appendChild(undo);
+      return button;
+    }
+    function render() {
+      board.innerHTML = '';
+      state.order.forEach((team) => board.appendChild(makeTeamPanel(team)));
+    }
+    resetBtn.addEventListener('click', resetScores);
+    swapBtn.addEventListener('click', swapSides);
+    render();
+  </script>
+</body>
+</html>
